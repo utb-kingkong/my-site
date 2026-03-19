@@ -3,58 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나의 올인원 링크</title>
+    <title>유튜브 채널 분석기</title>
     <style>
-        /* 배경과 전체 글꼴 설정 */
-        body {
-            background-color: #f3f4f6;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 50px 20px;
-            font-family: 'Apple SD Gothic Neo', sans-serif;
-        }
-        /* 프로필 이미지(원형) */
-        .profile-img {
-            width: 100px;
-            height: 100px;
-            background-color: #ddd;
-            border-radius: 50%;
-            margin-bottom: 20px;
-        }
-        /* 이름 설정 */
-        h1 { font-size: 1.5rem; margin-bottom: 30px; color: #333; }
-        /* 버튼 스타일 (all-in-one 사이트 느낌) */
-        .link-button {
-            width: 100%;
-            max-width: 400px;
-            background-color: white;
-            color: #333;
-            padding: 15px;
-            margin-bottom: 15px;
-            text-decoration: none;
-            text-align: center;
-            border-radius: 12px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        /* 마우스 올렸을 때 효과 */
-        .link-button:hover {
-            transform: scale(1.05);
-            background-color: #fafafa;
-        }
+        body { background-color: #f3f4f6; text-align: center; font-family: sans-serif; padding: 50px; }
+        /* 질문 상자 스타일 */
+        input { padding: 10px; width: 300px; border-radius: 10px; border: 1px solid #ddd; }
+        /* 시작 스위치 스타일 */
+        button { padding: 10px 20px; background-color: #ff0000; color: white; border: none; border-radius: 10px; cursor: pointer; margin-left: 10px; font-weight: bold;}
+        button:hover { background-color: #cc0000; }
+        /* 결과 화면 스타일 */
+        #result-box { margin-top: 30px; background: white; padding: 20px; border-radius: 15px; display: none; max-width: 400px; margin-left: auto; margin-right: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <div class="profile-img"></div>
-    <h1>@나의_유튜브_채널</h1>
+    <h1>🎬 유튜브 채널 분석 로봇</h1>
+    <p>분석하고 싶은 유튜브 채널 주소를 넣어주세요!</p>
 
-    <a href="유튜브주소" class="link-button">📺 유튜브 채널 바로가기</a>
-    <a href="인스타주소" class="link-button">📸 인스타그램 구경하기</a>
-    <a href="블로그주소" class="link-button">📝 나의 네이버 블로그</a>
-    <a href="쇼핑몰주소" class="link-button">🛒 굿즈 구매하기 (준비중)</a>
+    <input type="text" id="channel-url" placeholder="https://www.youtube.com/@채널명">
+    
+    <button onclick="startAnalysis()">분석 시작!</button>
+
+    <div id="result-box">
+        <h3>📊 분석 결과 (가짜 데이터)</h3>
+        <p><strong>채널명:</strong> <span id="res-name">대기 중...</span></p>
+        <p><strong>구독자 수:</strong> <span id="res-subs">대기 중...</span></p>
+        <p><strong>인기 포맷:</strong> <span id="res-format">대기 중...</span></p>
+        <p><em>* 진짜 데이터는 나중에 API라는 걸 연결해야 해요!</em></p>
+    </div>
+
+    <script>
+        function startAnalysis() {
+            // 사용자가 입력한 주소를 가져옵니다.
+            const url = document.getElementById('channel-url').value;
+
+            // 주소가 비어있으면 경고창을 띄웁니다.
+            if (!url) {
+                alert("유튜브 주소를 먼저 입력해 주세요!");
+                return;
+            }
+
+            // 결과 화면을 보여줍니다.
+            document.getElementById('result-box').style.display = 'block';
+
+            // 일단은 가짜 데이터를 화면에 채워 넣습니다.
+            // (나중에 진짜 유튜브 서버와 통신하는 코드로 바꿔야 해요!)
+            document.getElementById('res-name').innerText = "@분석된_채널";
+            document.getElementById('res-subs').innerText = "10만 명 (추정)";
+            document.getElementById('res-format').innerText = "3D 애니메이션 포맷 (니치밴딩 추천)";
+            
+            alert("분석이 완료되었습니다! (가짜 데이터입니다)");
+        }
+    </script>
 
 </body>
 </html>
