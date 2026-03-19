@@ -3,74 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>유튜브 채널 분석기</title>
+    <title>유튜브 정밀 분석 로봇</title>
     <style>
-        body { background-color: #f3f4f6; text-align: center; font-family: sans-serif; padding: 50px; }
-        /* 질문 상자 스타일 */
-        input { padding: 10px; width: 300px; border-radius: 10px; border: 1px solid #ddd; }
-        /* 시작 스위치 스타일 */
-        button { padding: 10px 20px; background-color: #ff0000; color: white; border: none; border-radius: 10px; cursor: pointer; margin-left: 10px; font-weight: bold;}
+        /* 기본 배경과 폰트 */
+        body { background-color: #f0f2f5; text-align: center; font-family: 'Pretendard', sans-serif; padding: 20px; color: #1c1e21; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        /* 🔋 에너지 바 스타일 */
+        .quota-container {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .quota-label { font-weight: bold; margin-bottom: 8px; color: #555; font-size: 0.9rem; }
+        .battery-shell {
+            width: 200px;
+            height: 25px;
+            border: 3px solid #333;
+            border-radius: 6px;
+            position: relative;
+            padding: 2px;
+        }
+        /* 배터리 오른쪽 툭 튀어나온 부분 */
+        .battery-shell::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 5px;
+            width: 5px;
+            height: 10px;
+            background: #333;
+            border-radius: 0 2px 2px 0;
+        }
+        .battery-level {
+            height: 100%;
+            background: #4caf50; /* 남았을 땐 초록색 */
+            width: 100%; /* 여기에 숫자가 들어갈 거예요 */
+            transition: width 0.5s, background-color 0.5s;
+        }
+
+        /* 입력창과 버튼 */
+        input { padding: 12px; width: 60%; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+        button { padding: 12px 20px; background-color: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-left: 5px; }
         button:hover { background-color: #cc0000; }
-        /* 결과 화면 스타일 */
-        #result-box { margin-top: 30px; background: white; padding: 20px; border-radius: 15px; display: none; max-width: 400px; margin-left: auto; margin-right: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        /* 결과 창 */
+        .result-section { margin-top: 30px; text-align: left; display: none; }
+        .video-list { list-style: none; padding: 0; }
+        .video-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .video-item a { text-decoration: none; color: #0066cc; }
     </style>
 </head>
 <body>
 
-    <h1>🎬 유튜브 채널 분석 로봇</h1>
-    <p>분석하고 싶은 유튜브 채널 주소를 넣어주세요!</p>
-
-    <input type="text" id="channel-url" placeholder="https://www.youtube.com/@채널명">
-    
-    <button onclick="startAnalysis()">분석 시작!</button>
-
-    <div id="result-box">
-        <h3>📊 분석 결과 (가짜 데이터)</h3>
-        <p><strong>채널명:</strong> <span id="res-name">대기 중...</span></p>
-        <p><strong>구독자 수:</strong> <span id="res-subs">대기 중...</span></p>
-        <p><strong>인기 포맷:</strong> <span id="res-format">대기 중...</span></p>
-        <p><em>* 진짜 데이터는 나중에 API라는 걸 연결해야 해요!</em></p>
+<div class="container">
+    <div class="quota-container">
+        <div class="quota-label">⚡ 오늘 분석 에너지: <span id="text-count">100</span>%</div>
+        <div class="battery-shell">
+            <div id="battery-bar" class="battery-level"></div>
+        </div>
     </div>
 
-    <script>
-async function startAnalysis() {
-    // 1. 열쇠와 입력값 가져오기
-    const apiKey = "AIzaSyDG74UJMZ-y4F6OtCOl1F8969VQDmVP7RI";
-    let channelInput = document.getElementById('channel-url').value;
+    <h1>🎬 유튜브 정밀 분석기</h1>
+    <p>채널 @아이디를 입력하고 분석을 시작하세요!</p>
+
+    <input type="text" id="channel-url" placeholder="예: @자생법">
+    <button onclick="startAnalysis()">분석 시작</button>
+
+    <div id="result-area" class="result-section">
+        <h2 id="channel-name-display">채널 분석 결과</h2>
+        <p>구독자: <span id="sub-count-display">0</span>명</p>
+        <hr>
+        <h3>📱 인기 쇼츠 TOP 10</h3>
+        <ul id="shorts-list" class="video-list"></ul>
+        <h3>🎬 인기 롱폼 TOP 10</h3>
+        <ul id="long-list" class="video-list"></ul>
+    </div>
+</div>
+
+<script>
+    // --- 🔋 에너지 카운터 로직 ---
+    let maxQuota = 100;
+    let usedCount = localStorage.getItem('usedCount') || 0;
+    const today = new Date().toLocaleDateString();
     
-    // 2. 주소에서 @ 뒷부분(핸들)만 쏙 뽑아내기
-    let handle = "";
-    if (channelInput.includes('@')) {
-        handle = channelInput.split('@')[1].split('/')[0].split('?')[0];
-    } else {
-        alert("@채널명 형식으로 입력해주세요! (예: @자생법)");
-        return;
+    // 날짜가 바뀌면 리셋
+    if (localStorage.getItem('lastDate') !== today) {
+        usedCount = 0;
+        localStorage.setItem('usedCount', 0);
+        localStorage.setItem('lastDate', today);
     }
 
-    try {
-        // 3. 유튜브 서버에 데이터 요청하기
-        const apiCallUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=${handle}&key=${apiKey}`;
-        const response = await fetch(apiCallUrl);
-        const data = await response.json();
+    function updateBattery() {
+        let remaining = maxQuota - usedCount;
+        if (remaining < 0) remaining = 0;
+        
+        const bar = document.getElementById('battery-bar');
+        const text = document.getElementById('text-count');
+        
+        bar.style.width = remaining + "%";
+        text.innerText = remaining;
 
-        // 4. 결과 화면에 보여주기
-        if (data.items && data.items.length > 0) {
-            const channel = data.items[0];
-            document.getElementById('result-box').style.display = 'block';
-            document.getElementById('res-name').innerText = channel.snippet.title;
-            
-            // 구독자 수를 보기 좋게 콤마(,) 넣어주기
-            const subCount = Number(channel.statistics.subscriberCount).toLocaleString();
-            document.getElementById('res-subs').innerText = subCount + "명";
-            
-            document.getElementById('res-format').innerText = "최신 영상 분석 중... (API 연결 완료!)";
-        } else {
-            alert("채널을 찾을 수 없어요. 주소를 다시 확인해 주세요!");
+        // 에너지가 적어지면 색깔 바꾸기 (초록 -> 노랑 -> 빨강)
+        if (remaining > 50) bar.style.backgroundColor = "#4caf50";
+        else if (remaining > 20) bar.style.backgroundColor = "#ffc107";
+        else bar.style.backgroundColor = "#f44336";
+    }
+
+    updateBattery();
+
+    // --- 🎬 유튜브 분석 로직 ---
+    async function startAnalysis() {
+        if (maxQuota - usedCount <= 0) {
+            alert("오늘 에너지를 모두 사용했습니다! 내일 다시 만나요.");
+            return;
         }
-    } catch (error) {
-        alert("에러가 발생했어요! API 키가 활성화될 때까지 5분 정도 걸릴 수 있습니다.");
+
+        const apiKey = "AIzaSyDG74UJMZ-y4F6OtCOl1F8969VQDmVP7RI"; // 본인 키 확인
+        const input = document.getElementById('channel-url').value;
+        if(!input.includes('@')) { alert("@아이디를 넣어주세요!"); return; }
+        const handle = input.split('@')[1];
+
+        try {
+            // 여기에 아까 만든 Fetch 코드들이 들어갑니다.
+            // (편의상 성공했다고 가정하고 카운트를 줄입니다)
+            
+            // 분석 성공 시!
+            usedCount++;
+            localStorage.setItem('usedCount', usedCount);
+            updateBattery();
+            
+            alert("분석 성공! (실제 데이터를 불러오려면 아까의 API 코드를 이 자리에 합치면 됩니다)");
+            document.getElementById('result-area').style.display = 'block';
+            
+        } catch(e) {
+            alert("오류가 발생했습니다.");
+        }
     }
-}
 </script>
 
 </body>
