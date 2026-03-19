@@ -5,79 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>유튜브 정밀 분석 로봇</title>
     <style>
-        /* 기본 배경과 폰트 */
-        body { background-color: #f0f2f5; text-align: center; font-family: 'Pretendard', sans-serif; padding: 20px; color: #1c1e21; }
+        body { background-color: #f0f2f5; text-align: center; font-family: sans-serif; padding: 20px; }
         .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-        /* 🔋 에너지 바 스타일 */
-        .quota-container {
-            background: #fff;
-            border: 2px solid #ddd;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 25px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .quota-label { font-weight: bold; margin-bottom: 8px; color: #555; font-size: 0.9rem; }
-        .battery-shell {
-            width: 200px;
-            height: 25px;
-            border: 3px solid #333;
-            border-radius: 6px;
-            position: relative;
-            padding: 2px;
-        }
-        /* 배터리 오른쪽 툭 튀어나온 부분 */
-        .battery-shell::after {
-            content: '';
-            position: absolute;
-            right: -8px;
-            top: 5px;
-            width: 5px;
-            height: 10px;
-            background: #333;
-            border-radius: 0 2px 2px 0;
-        }
-        .battery-level {
-            height: 100%;
-            background: #4caf50; /* 남았을 땐 초록색 */
-            width: 100%; /* 여기에 숫자가 들어갈 거예요 */
-            transition: width 0.5s, background-color 0.5s;
-        }
+        
+        /* 🔋 배터리 디자인 */
+        .quota-container { background: #fff; border: 2px solid #ddd; border-radius: 15px; padding: 15px; margin-bottom: 25px; display: flex; flex-direction: column; align-items: center; }
+        .battery-shell { width: 200px; height: 25px; border: 3px solid #333; border-radius: 6px; position: relative; padding: 2px; }
+        .battery-shell::after { content: ''; position: absolute; right: -8px; top: 5px; width: 5px; height: 10px; background: #333; }
+        .battery-level { height: 100%; background: #4caf50; width: 100%; transition: width 0.5s; }
 
         /* 입력창과 버튼 */
-        input { padding: 12px; width: 60%; border-radius: 8px; border: 1px solid #ddd; outline: none; }
-        button { padding: 12px 20px; background-color: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-left: 5px; }
-        button:hover { background-color: #cc0000; }
-
-        /* 결과 창 */
+        input { padding: 12px; width: 60%; border-radius: 8px; border: 1px solid #ddd; }
+        button { padding: 12px 20px; background-color: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        /* 결과 화면 */
         .result-section { margin-top: 30px; text-align: left; display: none; }
         .video-list { list-style: none; padding: 0; }
-        .video-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        .video-item a { text-decoration: none; color: #0066cc; }
+        .video-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        .video-item a { text-decoration: none; color: #0066cc; font-weight: bold; }
+        .views { font-size: 0.8rem; color: #888; }
+        .loading { display: none; color: red; font-weight: bold; margin: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="quota-container">
-        <div class="quota-label">⚡ 오늘 분석 에너지: <span id="text-count">100</span>%</div>
-        <div class="battery-shell">
-            <div id="battery-bar" class="battery-level"></div>
-        </div>
+        <div class="quota-label">⚡ 오늘 남은 에너지: <span id="text-count">100</span>%</div>
+        <div class="battery-shell"><div id="battery-bar" class="battery-level"></div></div>
     </div>
 
-    <h1>🎬 유튜브 정밀 분석기</h1>
-    <p>채널 @아이디를 입력하고 분석을 시작하세요!</p>
-
+    <h1>🎬 유튜브 정밀 분석 로봇</h1>
     <input type="text" id="channel-url" placeholder="예: @자생법">
     <button onclick="startAnalysis()">분석 시작</button>
+    <div id="loading-text" class="loading">데이터를 찾는 중... (3~5초 소요)</div>
 
     <div id="result-area" class="result-section">
-        <h2 id="channel-name-display">채널 분석 결과</h2>
-        <p>구독자: <span id="sub-count-display">0</span>명</p>
+        <h2 id="res-name">채널명</h2>
+        <p>📊 구독자 수: <span id="res-subs">0</span>명</p>
         <hr>
         <h3>📱 인기 쇼츠 TOP 10</h3>
         <ul id="shorts-list" class="video-list"></ul>
@@ -87,65 +52,79 @@
 </div>
 
 <script>
-    // --- 🔋 에너지 카운터 로직 ---
+    // 1. 에너지 카운터 설정
     let maxQuota = 100;
-    let usedCount = localStorage.getItem('usedCount') || 0;
+    let usedCount = parseInt(localStorage.getItem('usedCount') || 0);
     const today = new Date().toLocaleDateString();
-    
-    // 날짜가 바뀌면 리셋
-    if (localStorage.getItem('lastDate') !== today) {
-        usedCount = 0;
-        localStorage.setItem('usedCount', 0);
-        localStorage.setItem('lastDate', today);
-    }
+    if (localStorage.getItem('lastDate') !== today) { usedCount = 0; localStorage.setItem('lastDate', today); }
 
     function updateBattery() {
         let remaining = maxQuota - usedCount;
-        if (remaining < 0) remaining = 0;
-        
-        const bar = document.getElementById('battery-bar');
-        const text = document.getElementById('text-count');
-        
-        bar.style.width = remaining + "%";
-        text.innerText = remaining;
-
-        // 에너지가 적어지면 색깔 바꾸기 (초록 -> 노랑 -> 빨강)
-        if (remaining > 50) bar.style.backgroundColor = "#4caf50";
-        else if (remaining > 20) bar.style.backgroundColor = "#ffc107";
-        else bar.style.backgroundColor = "#f44336";
+        document.getElementById('battery-bar').style.width = remaining + "%";
+        document.getElementById('text-count').innerText = remaining;
     }
-
     updateBattery();
 
-    // --- 🎬 유튜브 분석 로직 ---
+    // 2. 진짜 유튜브 분석 시작
     async function startAnalysis() {
-        if (maxQuota - usedCount <= 0) {
-            alert("오늘 에너지를 모두 사용했습니다! 내일 다시 만나요.");
-            return;
-        }
+        if (maxQuota - usedCount <= 0) { alert("에너지를 다 썼어요!"); return; }
 
-        const apiKey = "AIzaSyDG74UJMZ-y4F6OtCOl1F8969VQDmVP7RI"; // 본인 키 확인
+        const apiKey = "AIzaSyDG74UJMZ-y4F6OtCOl1F8969VQDmVP7RI"; // 본인 키
         const input = document.getElementById('channel-url').value;
         if(!input.includes('@')) { alert("@아이디를 넣어주세요!"); return; }
-        const handle = input.split('@')[1];
+        const handle = input.split('@')[1].split('/')[0];
+
+        document.getElementById('loading-text').style.display = 'block';
+        document.getElementById('result-area').style.display = 'none';
 
         try {
-            // 여기에 아까 만든 Fetch 코드들이 들어갑니다.
-            // (편의상 성공했다고 가정하고 카운트를 줄입니다)
+            // 채널 ID 가져오기
+            const chRes = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=${handle}&key=${apiKey}`);
+            const chData = await chRes.json();
+            const channel = chData.items[0];
+
+            // 인기 영상 30개 가져오기
+            const searchRes = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channel.id}&maxResults=30&order=viewCount&type=video&key=${apiKey}`);
+            const searchData = await searchRes.json();
+
+            const shortsList = document.getElementById('shorts-list');
+            const longList = document.getElementById('long-list');
+            shortsList.innerHTML = ""; longList.innerHTML = "";
+
+            let sCount = 0; let lCount = 0;
+
+            for (let item of searchData.items) {
+                const vId = item.id.videoId;
+                const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${vId}&key=${apiKey}`);
+                const vData = await vRes.json();
+                const video = vData.items[0];
+
+                const title = item.snippet.title;
+                const views = Number(video.statistics.viewCount).toLocaleString();
+                const duration = video.contentDetails.duration;
+                const li = `<li class="video-item"><a href="https://youtu.be/${vId}" target="_blank">${title}</a><span class="views">👁️ ${views}</span></li>`;
+
+                if (!duration.includes('M') && sCount < 10) { shortsList.innerHTML += li; sCount++; } 
+                else if (duration.includes('M') && lCount < 10) { longList.innerHTML += li; lCount++; }
+                if (sCount >= 10 && lCount >= 10) break;
+            }
+
+            // 화면에 보여주기
+            document.getElementById('res-name').innerText = channel.snippet.title;
+            document.getElementById('res-subs').innerText = Number(channel.statistics.subscriberCount).toLocaleString();
             
-            // 분석 성공 시!
             usedCount++;
             localStorage.setItem('usedCount', usedCount);
             updateBattery();
             
-            alert("분석 성공! (실제 데이터를 불러오려면 아까의 API 코드를 이 자리에 합치면 됩니다)");
+            document.getElementById('loading-text').style.display = 'none';
             document.getElementById('result-area').style.display = 'block';
-            
+
         } catch(e) {
-            alert("오류가 발생했습니다.");
+            alert("분석 실패! API 키나 주소를 확인하세요.");
+            document.getElementById('loading-text').style.display = 'none';
         }
     }
 </script>
-
 </body>
 </html>
