@@ -1,16 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <title>나의 유튜브 채널 소개</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 올인원 링크</title>
     <style>
-        body { background-color: skyblue; text-align: center; font-family: sans-serif; }
-        h1 { color: white; }
-        .button { background: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; }
+        /* 배경과 전체 글꼴 설정 */
+        body {
+            background-color: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            font-family: 'Apple SD Gothic Neo', sans-serif;
+        }
+        /* 프로필 이미지(원형) */
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            background-color: #ddd;
+            border-radius: 50%;
+            margin-bottom: 20px;
+        }
+        /* 이름 설정 */
+        h1 { font-size: 1.5rem; margin-bottom: 30px; color: #333; }
+        /* 버튼 스타일 (all-in-one 사이트 느낌) */
+        .link-button {
+            width: 100%;
+            max-width: 400px;
+            background-color: white;
+            color: #333;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        /* 마우스 올렸을 때 효과 */
+        .link-button:hover {
+            transform: scale(1.05);
+            background-color: #fafafa;
+        }
     </style>
 </head>
 <body>
-    <h1>안녕하세요! 제 유튜브를 소개합니다</h1>
-    <p>여기 버튼을 누르면 제 채널로 이동해요!</p>
-    <a href="내유튜브주소" class="button">유튜브 구경가기</a>
+
+    <div class="profile-img"></div>
+    <h1>@나의_유튜브_채널</h1>
+
+    <a href="유튜브주소" class="link-button">📺 유튜브 채널 바로가기</a>
+    <a href="인스타주소" class="link-button">📸 인스타그램 구경하기</a>
+    <a href="블로그주소" class="link-button">📝 나의 네이버 블로그</a>
+    <a href="쇼핑몰주소" class="link-button">🛒 굿즈 구매하기 (준비중)</a>
+
 </body>
 </html>
